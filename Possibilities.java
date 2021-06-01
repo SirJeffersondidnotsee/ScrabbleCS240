@@ -52,18 +52,11 @@ public class Possibilities {
         PrintAllWords(Hand, root, N);
     }
     
-    // method which starts searching for words based off letters in the given hand, then
+    //method which starts searching for words based off letters in the given hand, then
     //passes off to a recursive function which finishes the search and prints the word
     static void PrintAllWords(char hand[], TrieNode root,int handSize) {
-    
-        // create a 'has' boolean array that will store all
-        // present characters in Hand[]
-        boolean[] Has = new boolean[SIZE];
-       
-        for (int i = 0 ; i < handSize; i++) {
-            Has[hand[i] - 'a'] = true;
-        }
-        //starting to add in an int array to represent the count vs the boolean array to eliminate
+        
+        //added an int array to represent the count vs the boolean array to eliminate
         //reused letters
         int[] count = new int[SIZE];
         
@@ -78,41 +71,67 @@ public class Possibilities {
        
         // Checks every letter, if any is in hand and the dictionary, adds letter
         //to the string, then calls recursive funtion to finish search and print, then resets string
-        for (int i = 0 ; i < SIZE ; i++)
-        {
-           \//if the letter is in our hand, and in the dictionary
-            if (Has[i] == true && current.Child[i] != null )
-            {
+        for (int i = 0 ; i < SIZE ; i++) {
+           //if the letter is in our hand, and in the dictionary
+            if (count[i] > 0 && current.Child[i] != null ) {
                 str = str+(char)(i + 'a');
+                count[i]--;
                 //System.out.println("2"); was using for testing
 
-                searchWord(current.Child[i], Has, str, count);
+                searchWord(hand, current.Child[i], str, count);
+                
+
                 str = "";
             }
         }
     }
     
-        // A recursive function to print all possible valid
+    // A recursive function to print all possible valid
     // words present in array
-    static void searchWord(TrieNode current, boolean Has[],String str, int counter[]) {
+    static void searchWord(char hand[], TrieNode current,String str, int counter[]) {
 
         // base case which outputs a word when we have reached the end of a word
         if (current.endOfWord == true) {
             System.out.println(str);
-            //System.out.println("1");
+            
+            
         }
-        // checks the children of the current node assigned as 'root'
+        // checks the children of the current node
         for (int K = 0; K < SIZE; K++) {
-
-            if (Has[K] == true && current.Child[K] != null) {
+            //if the letter is in the hand & part of a word in the dictionary
+            if (counter[K] > 0 && current.Child[K] != null) {
                 // add current character
                 char c = (char) (K + 'a');
-
-                // Recursively search for remaining characters in word
-                searchWord(current.Child[K], Has, str + c, counter);
+                
+                counter[K]--;
+                
+                // Recursive search for remaining characters in word
+                searchWord(hand, current.Child[K], str + c, counter);
+                //adds the letters back into the count array as it recurses 
+                //back through itself to maintain the proper count while searching thoroughly
+                counter[K]++;
+    
             }
         }
+        
     }
+ 
+    //was working on this as a method of resetting the count before I
+    //figured out how to do it recursively with the search. probably can be deleted    
+    static void resetHand(char hand[], String readdedWord, int counter[]) {
+    
+        for (int x = 0; x < hand.length; x++) {
+            
+            counter[hand[x] - 'a'] = 0;
+
+        }
+        
+        for (int y = 0; y < hand.length; y++) {
+            
+            counter[hand[y] - 'a']++;
+
+        }   
+    }        
     
     //simple method for getting size of dictionary so we know what size the array
     //that will store all the words before they are moved into the trie will need to be.
