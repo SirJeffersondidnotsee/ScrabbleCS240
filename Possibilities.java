@@ -29,12 +29,13 @@ public class Possibilities {
         Scanner in = new Scanner(System.in);
         System.out.println("What is the filename?");
         String input = in.nextLine();
-        File file = new File(input);      
-       
+        
+        
+        File file = new File(input);            
         
         // creates an empty array the size of the dictionary
         String[] Dict = new String[fileSize(input)];
-        
+                    
         // Adds the words from the file to the array
         populate(Dict, input);
        
@@ -43,15 +44,44 @@ public class Possibilities {
        
         // insert all words of dictionary into trie
         int n = Dict.length;
-        for (int i=0; i<n; i++)
+        for (int i=0; i<n; i++) {
             insert(root, Dict[i]);
-       
-        char Hand[] = {'a', 'i', 's', 'n', 'h', 'm', 'n'} ;
-        int N = Hand.length;
-               
-        PrintAllWords(Hand, root, N);
+        }    
+        System.out.println("Enter the letters in your Scrabble hand:");
+        System.out.println("**all input besides upper or lowercase letters will be ignored");
+
+        String input2 = in.nextLine();
+        
+        //writing a method 'createHand' for taking in user input for the letters
+        char Hand[] = createHand(input2);
+        int z = Hand.length;
+        
+        System.out.println("Thank you!");
+        System.out.println("Here are all of the words in the dictionary you can make with those letters:");
+
+                  
+        PrintAllWords(Hand, root, z);
+        
     }
+
+    //creates the char array which holds the letters for the hand of scrabble so that
+    //it can be created with user input.   
+    static char[] createHand(String userLetters) {
     
+        userLetters = userLetters.replaceAll("[^A-Za-z]+", "");
+        
+        String[] preLetters = userLetters.toLowerCase().split("\\W+");
+       
+        String postLetters = new String();
+            
+        for(int i = 0; i < preLetters.length;i++){
+            postLetters = postLetters + preLetters[i];
+        }
+
+        char newHand[] = postLetters.toCharArray();    
+        return newHand;
+    }        
+      
     //method which starts searching for words based off letters in the given hand, then
     //passes off to a recursive function which finishes the search and prints the word
     static void PrintAllWords(char hand[], TrieNode root,int handSize) {
@@ -115,23 +145,7 @@ public class Possibilities {
         }
         
     }
- 
-    //was working on this as a method of resetting the count before I
-    //figured out how to do it recursively with the search. probably can be deleted    
-    static void resetHand(char hand[], String readdedWord, int counter[]) {
-    
-        for (int x = 0; x < hand.length; x++) {
-            
-            counter[hand[x] - 'a'] = 0;
-
-        }
         
-        for (int y = 0; y < hand.length; y++) {
-            
-            counter[hand[y] - 'a']++;
-
-        }   
-    }        
     
     //simple method for getting size of dictionary so we know what size the array
     //that will store all the words before they are moved into the trie will need to be.
@@ -149,7 +163,7 @@ public class Possibilities {
         }
       myReader.close();
       } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
+            System.out.println("An error occurred. That file wasn't found in the project folder.");
             e.printStackTrace();
         }return dictSize;   
     }
