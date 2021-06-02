@@ -27,7 +27,7 @@ public class Possibilities {
     public static void main(String args[]) {
     
         Scanner in = new Scanner(System.in);
-        System.out.println("What is the filename?");
+        System.out.println("What is the filename for your dictionary?('example.txt')");
         String input = in.nextLine();
         
         
@@ -35,35 +35,68 @@ public class Possibilities {
         
         // creates an empty array the size of the dictionary
         String[] Dict = new String[fileSize(input)];
+        
+        //Arraylist for storing words pre-scoring
+        List<String> words = new ArrayList<>();
+        
+        //Arraylist for storing scored words for sorting
+         List<Score> scoredWords = new ArrayList<>();
                     
-        // Adds the words from the file to the array
+        // Adds the words from the file to the initial dictionary array
         populate(Dict, input);
        
         // Root Node of Trie
         TrieNode root = new TrieNode();
        
-        // insert all words of dictionary into trie
-        int n = Dict.length;
-        for (int i=0; i<n; i++) {
-            insert(root, Dict[i]);
-        }    
+        // insert all words of dictionary array into trie
+        createDictionary(Dict, root);
+           
         System.out.println("Enter the letters in your Scrabble hand:");
         System.out.println("**all input besides upper or lowercase letters will be ignored");
 
         String input2 = in.nextLine();
         
-        //writing a method 'createHand' for taking in user input for the letters
         char Hand[] = createHand(input2);
         int z = Hand.length;
         
         System.out.println("Thank you!");
-        System.out.println("Here are all of the words in the dictionary you can make with those letters:");
+        System.out.println("Here are the words you can make with those letters in descending order:");
 
                   
-        PrintAllWords(Hand, root, z);
+        beginSearchWords(Hand, root, z, scoredWords, words);
+        convertToScore(words,scoredWords);
+        printScoredWords(scoredWords);
+        
         
     }
-
+    
+    static void createDictionary(String[] Dict, TrieNode root) {
+        int n = Dict.length;
+        for (int i=0; i<n; i++) {
+            insert(root, Dict[i]);
+        }
+    }
+    
+    // Fill scoredWords arraylist from words, then sorts the arraylist by score
+    static void convertToScore(List<String> words, List<Score> scoredWords) {
+        
+        for (int i = 0; i < words.size(); ++i) {
+            String word = words.get(i);
+            scoredWords.add(new Score(word, i, scrabbleScore(word)));
+        }
+        
+        Collections.sort(scoredWords);
+    }
+    
+    //simple method for printing the scored words at the end of the program
+    static void printScoredWords(List<Score> scoredWords) {
+    
+        for (Score scoredWord : scoredWords) { 
+               
+            System.out.println(scoredWord.toString());
+        }
+    }
+    
     //creates the char array which holds the letters for the hand of scrabble so that
     //it can be created with user input.   
     static char[] createHand(String userLetters) {
@@ -84,7 +117,7 @@ public class Possibilities {
       
     //method which starts searching for words based off letters in the given hand, then
     //passes off to a recursive function which finishes the search and prints the word
-    static void PrintAllWords(char hand[], TrieNode root,int handSize) {
+    static void beginSearchWords(char hand[], TrieNode root,int handSize, List<Score> scoredWords, List<String> words) {
         
         //added an int array to represent the count vs the boolean array to eliminate
         //reused letters
@@ -102,15 +135,12 @@ public class Possibilities {
         // Checks every letter, if any is in hand and the dictionary, adds letter
         //to the string, then calls recursive funtion to finish search and print, then resets string
         for (int i = 0 ; i < SIZE ; i++) {
+        
            //if the letter is in our hand, and in the dictionary
             if (count[i] > 0 && current.Child[i] != null ) {
                 str = str+(char)(i + 'a');
                 count[i]--;
-                //System.out.println("2"); was using for testing
-
-                searchWord(hand, current.Child[i], str, count);
-                
-
+                searchWord(hand, current.Child[i], str, count, scoredWords, words);
                 str = "";
             }
         }
@@ -118,14 +148,16 @@ public class Possibilities {
     
     // A recursive function to print all possible valid
     // words present in array
-    static void searchWord(char hand[], TrieNode current,String str, int counter[]) {
+    static void searchWord(char hand[], TrieNode current,String str, int counter[], List<Score> scoredWords, List<String> words) {
+    
 
         // base case which outputs a word when we have reached the end of a word
         if (current.endOfWord == true) {
-            System.out.println(str);
             
-            
+            //replacing old simple print function with a storing function to try to add scoring
+            words.add(str);  
         }
+        
         // checks the children of the current node
         for (int K = 0; K < SIZE; K++) {
             //if the letter is in the hand & part of a word in the dictionary
@@ -136,16 +168,33 @@ public class Possibilities {
                 counter[K]--;
                 
                 // Recursive search for remaining characters in word
-                searchWord(hand, current.Child[K], str + c, counter);
-                //adds the letters back into the count array as it recurses 
-                //back through itself to maintain the proper count while searching thoroughly
+                searchWord(hand, current.Child[K], str + c, counter, scoredWords, words);
+                
+                //adds the letters back into the count array as it recurses back
+                //through itself to maintain the proper count while searching thoroughly
                 counter[K]++;
     
             }
         }
         
     }
-        
+    
+    
+    //Small method for returning a word's scrabble score.
+   static int scrabbleScore(String word) {
+        int score = 0;
+        int scrabbleScoreTable[] = { 1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3, 1, 1, 3, 10, 1, 1, 1, 1, 4, 4, 8, 4, 10 };
+        for (int i = 0; i < word.length(); i++) {
+            if (word.charAt(i) >= 'a' && word.charAt(i) <= 'z') {
+                score += scrabbleScoreTable[word.charAt(i) - 'a'];
+            }
+            else {
+             System.out.println("error in word input recursed from dictionary trie.");   // error in input 
+            }
+        }return score;
+    }
+    
+           
     
     //simple method for getting size of dictionary so we know what size the array
     //that will store all the words before they are moved into the trie will need to be.
@@ -210,4 +259,37 @@ public class Possibilities {
         current.endOfWord = true;
     }
    
+}
+
+//score class with variables for efficiently storing a string word, an int score, and an int for ordering.
+class Score implements Comparable<Score> {
+    public Score(String word, int order, int score) {
+        this.word = word;        
+        this.order = order;
+        this.score = score;
+    }
+    
+    public Score(String word, int score) {
+        this.word = word;
+        this.score = score;
+    }    
+
+    public String   getWord() { return word; }    
+    public int      getScore() { return score; }
+    public int      getOrder() { return order; } 
+
+    @Override   // Overridden sorting rule for sorting words by score in descending order
+    public int      compareTo(Score other) {
+        int result = other.getScore() - score;
+        return result == 0 ? order - other.getOrder() : result;
+    }
+
+    @Override  //overridden toString() method for printing out the score with the word
+    public String   toString() {
+        return word + " -score:" + score;
+    }
+    
+    private String word;    // the string for the word
+    private int order;      // the word's order in the final word list
+    private int score;      // the word's Scrabble score
 }
